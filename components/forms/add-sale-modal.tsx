@@ -1,13 +1,18 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Modal } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface AddSaleModalProps {
   isOpen: boolean
@@ -25,44 +30,85 @@ export interface SaleFormData {
   customerId: string
 }
 
+const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
+
 export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
   const [formData, setFormData] = useState<SaleFormData>({
-    nozzleId: "NOZZLE_02",
+    nozzleId: "",
     fuelType: "Diesel",
-    openingReading: 1500,
-    closingReading: 1525,
-    rate: 104.5,
+    openingReading: 0,
+    closingReading: 0,
+    rate: 0,
     paymentMode: "cash",
-    customerId: "CUST_001",
+    customerId: "",
   })
+
+  const [loading, setLoading] = useState(false)
 
   const quantity = formData.closingReading - formData.openingReading
   const amount = quantity * formData.rate
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
-    onClose()
+
+    const token = localStorage.getItem("token")
+    if (!token) {
+      alert("Please login again")
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/sales/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        alert(data.message || "Failed to create sale")
+        return
+      }
+
+      onSubmit(formData)
+      onClose()
+    } catch (err) {
+      alert("Server not reachable")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add New Sale" className="max-w-lg">
       <form onSubmit={handleSubmit} className="space-y-4">
+
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="nozzleId">Nozzle ID</Label>
+            <Label>Nozzle ID</Label>
             <Input
-              id="nozzleId"
+              placeholder="e.g. NOZZLE_02"
               value={formData.nozzleId}
-              onChange={(e) => setFormData({ ...formData, nozzleId: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, nozzleId: e.target.value })
+              }
               required
             />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="fuelType">Fuel Type</Label>
+            <Label>Fuel Type</Label>
             <Select
               value={formData.fuelType}
-              onValueChange={(value: "Petrol" | "Diesel" | "Premium") => setFormData({ ...formData, fuelType: value })}
+              onValueChange={(v: any) =>
+                setFormData({ ...formData, fuelType: v })
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -78,22 +124,33 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="openingReading">Opening Reading</Label>
+            <Label>Opening Reading</Label>
             <Input
-              id="openingReading"
-              type="number"
-              value={formData.openingReading}
-              onChange={(e) => setFormData({ ...formData, openingReading: Number.parseFloat(e.target.value) })}
+              type="text"
+              inputMode="numeric"
+              placeholder="e.g. 1500"
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  openingReading: Number(e.target.value),
+                })
+              }
               required
             />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="closingReading">Closing Reading</Label>
+            <Label>Closing Reading</Label>
             <Input
-              id="closingReading"
-              type="number"
-              value={formData.closingReading}
-              onChange={(e) => setFormData({ ...formData, closingReading: Number.parseFloat(e.target.value) })}
+              type="text"
+              inputMode="numeric"
+              placeholder="e.g. 1525"
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  closingReading: Number(e.target.value),
+                })
+              }
               required
             />
           </div>
@@ -101,21 +158,25 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="rate">Rate (₹/L)</Label>
+            <Label>Rate (₹/L)</Label>
             <Input
-              id="rate"
-              type="number"
-              step="0.01"
-              value={formData.rate}
-              onChange={(e) => setFormData({ ...formData, rate: Number.parseFloat(e.target.value) })}
+              type="text"
+              inputMode="decimal"
+              placeholder="e.g. 104.50"
+              onChange={(e) =>
+                setFormData({ ...formData, rate: Number(e.target.value) })
+              }
               required
             />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="paymentMode">Payment Mode</Label>
+            <Label>Payment Mode</Label>
             <Select
               value={formData.paymentMode}
-              onValueChange={(value: "cash" | "card" | "upi") => setFormData({ ...formData, paymentMode: value })}
+              onValueChange={(v: any) =>
+                setFormData({ ...formData, paymentMode: v })
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -130,33 +191,34 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="customerId">Customer ID</Label>
+          <Label>Customer ID</Label>
           <Input
-            id="customerId"
+            placeholder="e.g. CUST_001"
             value={formData.customerId}
-            onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, customerId: e.target.value })
+            }
             required
           />
         </div>
 
-        {/* Calculated Fields */}
         <div className="rounded-lg bg-muted p-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Quantity:</span>
-            <span className="font-medium">{quantity.toFixed(2)} L</span>
+            <span>Quantity</span>
+            <span>{quantity > 0 ? quantity.toFixed(2) : "0.00"} L</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Amount:</span>
-            <span className="font-medium">₹{amount.toFixed(2)}</span>
+            <span>Amount</span>
+            <span>₹{amount > 0 ? amount.toFixed(2) : "0.00"}</span>
           </div>
         </div>
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1 bg-transparent">
             Cancel
           </Button>
-          <Button type="submit" className="flex-1">
-            Add Sale
+          <Button type="submit" className="flex-1" disabled={loading}>
+            {loading ? "Adding..." : "Add Sale"}
           </Button>
         </div>
       </form>

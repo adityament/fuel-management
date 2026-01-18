@@ -1,156 +1,199 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/components/dashboard/layout"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
-import { FormInput } from "@/components/ui/form-input"
 import { FormSelect } from "@/components/ui/form-select"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { SummaryCard } from "@/components/ui/summary-card"
 import { DownloadButtons } from "@/components/download-buttons"
 import { AddSaleModal, type SaleFormData } from "@/components/forms/add-sale-modal"
-import { sales as initialSales } from "@/lib/dummy-data"
 import type { Sale } from "@/lib/types"
 import { Plus, Filter, IndianRupee, Droplets, Receipt } from "lucide-react"
 
+const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
+
 export default function AdminSalesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [salesList, setSalesList] = useState<Sale[]>(initialSales)
-  const [filters, setFilters] = useState({
-    date: "",
-    fuelType: "all",
-    paymentMode: "all",
-  })
+  const [salesList, setSalesList] = useState<Sale[]>([])
   const [showFilters, setShowFilters] = useState(false)
 
+  const [filters, setFilters] = useState({
+    nozzleId: "all",
+    fuelType: "all",
+  })
+
+  /* =======================
+     🔹 GET ALL SALES
+  ======================= */
+  useEffect(() => {
+    const fetchSales = async () => {
+      try {
+        const token = localStorage.getItem("token")
+
+        const res = await fetch(`${BASE_URL}/api/sales/getall`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        const data = await res.json()
+
+        const formatted: Sale[] = data.map((item: any) => ({
+          id: item._id,
+          nozzleId: item.nozzleId,
+          fuelType: item.fuelType,
+          openingReading: item.openingReading,
+          closingReading: item.closingReading,
+          rate: item.rate,
+          quantity: item.quantity,
+          amount: item.amount,
+          paymentMode: item.paymentMode,
+          shift: item.shift,
+          date: item.date.split("T")[0],
+          customerId: item.customerId,
+          staffId: item.createdBy,
+        }))
+
+        setSalesList(formatted)
+      } catch (err) {
+        console.error("Sales fetch failed", err)
+      }
+    }
+
+    fetchSales()
+  }, [])
+
+  /* =======================
+     🔹 ADD SALE (LOCAL)
+  ======================= */
   const handleAddSale = (data: SaleFormData) => {
-    const quantity = data.closingReading - data.openingReading
+    const qty = data.closingReading - data.openingReading
+
     const newSale: Sale = {
-      id: `SALE${String(salesList.length + 1).padStart(3, "0")}`,
+      id: crypto.randomUUID(),
       nozzleId: data.nozzleId,
       fuelType: data.fuelType,
       openingReading: data.openingReading,
       closingReading: data.closingReading,
       rate: data.rate,
+      quantity: qty,
+      amount: qty * data.rate,
       paymentMode: data.paymentMode,
-      customerId: data.customerId,
-      quantity: quantity,
-      amount: quantity * data.rate,
-      shift: new Date().getHours() < 14 ? "morning" : new Date().getHours() < 22 ? "evening" : "night",
+      shift: "morning",
       date: new Date().toISOString().split("T")[0],
-      staffId: "STF001",
+      customerId: data.customerId,
+      staffId: "STAFF",
     }
-    setSalesList([...salesList, newSale])
+
+    setSalesList((prev) => [...prev, newSale])
   }
 
+  /* =======================
+     🔹 FILTERED DATA
+  ======================= */
   const filteredSales = salesList.filter((sale) => {
-    if (filters.date && sale.date !== filters.date) return false
-    if (filters.fuelType !== "all" && sale.fuelType !== filters.fuelType) return false
-    if (filters.paymentMode !== "all" && sale.paymentMode !== filters.paymentMode) return false
+    if (filters.nozzleId !== "all" && sale.nozzleId !== filters.nozzleId)
+      return false
+
+    if (filters.fuelType !== "all" && sale.fuelType !== filters.fuelType)
+      return false
+
     return true
   })
 
-  const columns = [
-    { key: "id", header: "Sale ID" },
-    { key: "nozzleId", header: "Nozzle" },
-    {
-      key: "fuelType",
-      header: "Fuel Type",
-      render: (item: Sale) => (
-        <StatusBadge
-          variant={item.fuelType === "Petrol" ? "petrol" : item.fuelType === "Diesel" ? "diesel" : "premium"}
-        >
-          {item.fuelType}
-        </StatusBadge>
-      ),
-    },
-    {
-      key: "quantity",
-      header: "Quantity",
-      render: (item: Sale) => `${item.quantity} L`,
-    },
-    {
-      key: "amount",
-      header: "Amount",
-      render: (item: Sale) => `₹${item.amount.toLocaleString()}`,
-    },
-    {
-      key: "paymentMode",
-      header: "Payment",
-      render: (item: Sale) => <StatusBadge variant="default">{item.paymentMode.toUpperCase()}</StatusBadge>,
-    },
-    {
-      key: "shift",
-      header: "Shift",
-      render: (item: Sale) => <span className="capitalize">{item.shift}</span>,
-    },
-    { key: "date", header: "Date" },
+  /* =======================
+     🔹 FILTER OPTIONS
+  ======================= */
+  const nozzleOptions = [
+    { value: "all", label: "All Nozzles" },
+    ...Array.from(new Set(salesList.map((s) => s.nozzleId))).map((id) => ({
+      value: id,
+      label: id,
+    })),
   ]
 
   const fuelTypeOptions = [
     { value: "all", label: "All Types" },
     { value: "Petrol", label: "Petrol" },
     { value: "Diesel", label: "Diesel" },
-    { value: "Premium", label: "Premium" },
   ]
 
-  const paymentModeOptions = [
-    { value: "all", label: "All Modes" },
-    { value: "cash", label: "Cash" },
-    { value: "card", label: "Card" },
-    { value: "upi", label: "UPI" },
+  /* =======================
+     🔹 TABLE COLUMNS
+  ======================= */
+  const columns = [
+    { key: "nozzleId", header: "Nozzle ID" },
+    {
+      key: "fuelType",
+      header: "Fuel Type",
+      render: (i: Sale) => (
+        <StatusBadge variant={i.fuelType === "Petrol" ? "petrol" : "diesel"}>
+          {i.fuelType}
+        </StatusBadge>
+      ),
+    },
+    { key: "openingReading", header: "Opening" },
+    { key: "closingReading", header: "Closing" },
+    { key: "rate", header: "Rate" },
+    {
+      key: "amount",
+      header: "Total Amount",
+      render: (i: Sale) => `₹${i.amount}`,
+    },
+    { key: "date", header: "Date" },
   ]
 
   return (
     <DashboardLayout title="Sales" requiredRole="admin">
       <div className="space-y-6">
-        {/* Action Bar */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Sales Records</h2>
-            <p className="text-sm text-muted-foreground">Track and manage all fuel sales</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <DownloadButtons sales={filteredSales} variant="dropdown" />
-            <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="bg-transparent">
-              <Filter className="mr-2 h-4 w-4" />
-              Filters
+
+        {/* ACTION BAR */}
+        <div className="flex flex-wrap justify-between gap-2">
+          <DownloadButtons sales={filteredSales} variant="dropdown" />
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="bg-transparent"
+            >
+              <Filter className="mr-2 h-4 w-4" /> Filters
             </Button>
+
             <Button size="sm" onClick={() => setIsModalOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Sale
+              <Plus className="mr-2 h-4 w-4" /> Add Sale
             </Button>
           </div>
         </div>
 
+        {/* FILTER SECTION */}
         {showFilters && (
           <div className="rounded-xl border border-border bg-card p-4">
-            <div className="grid gap-4 md:grid-cols-4">
-              <FormInput
-                label="Date"
-                type="date"
-                value={filters.date}
-                onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+            <div className="grid gap-4 md:grid-cols-3">
+              <FormSelect
+                label="Nozzle ID"
+                options={nozzleOptions}
+                value={filters.nozzleId}
+                onValueChange={(v) => setFilters({ ...filters, nozzleId: v })}
               />
+
               <FormSelect
                 label="Fuel Type"
                 options={fuelTypeOptions}
                 value={filters.fuelType}
-                onValueChange={(value) => setFilters({ ...filters, fuelType: value })}
+                onValueChange={(v) => setFilters({ ...filters, fuelType: v })}
               />
-              <FormSelect
-                label="Payment Mode"
-                options={paymentModeOptions}
-                value={filters.paymentMode}
-                onValueChange={(value) => setFilters({ ...filters, paymentMode: value })}
-              />
+
               <div className="flex items-end">
                 <Button
                   variant="outline"
-                  size="sm"
-                  onClick={() => setFilters({ date: "", fuelType: "all", paymentMode: "all" })}
                   className="w-full bg-transparent"
+                  onClick={() =>
+                    setFilters({ nozzleId: "all", fuelType: "all" })
+                  }
                 >
                   Clear Filters
                 </Button>
@@ -159,33 +202,42 @@ export default function AdminSalesPage() {
           </div>
         )}
 
+        {/* SUMMARY */}
         <div className="grid gap-4 md:grid-cols-3">
           <SummaryCard
             title="Total Sales"
-            value={`₹${filteredSales.reduce((sum, s) => sum + s.amount, 0).toLocaleString()}`}
+            value={`₹${filteredSales.reduce((s, i) => s + i.amount, 0)}`}
             icon={IndianRupee}
           />
           <SummaryCard
             title="Total Quantity"
-            value={`${filteredSales.reduce((sum, s) => sum + s.quantity, 0).toLocaleString()} L`}
+            value={`${filteredSales.reduce((s, i) => s + i.quantity, 0)} L`}
             icon={Droplets}
           />
-          <SummaryCard title="Transactions" value={filteredSales.length} icon={Receipt} />
+          <SummaryCard
+            title="Transactions"
+            value={filteredSales.length}
+            icon={Receipt}
+          />
         </div>
 
-        {/* Data Table */}
+        {/* TABLE */}
         <div className="rounded-xl border border-border bg-card p-4 md:p-6">
           <DataTable
             data={filteredSales}
             columns={columns}
-            searchPlaceholder="Search sales..."
-            searchKeys={["id", "nozzleId", "customerId"]}
             pageSize={5}
+            searchPlaceholder="Search sales..."
+            searchKeys={["id", "nozzleId"]}
           />
         </div>
       </div>
 
-      <AddSaleModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleAddSale} />
+      <AddSaleModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleAddSale}
+      />
     </DashboardLayout>
   )
 }
