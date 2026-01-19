@@ -8,6 +8,9 @@ import {
   type ReactNode,
 } from "react"
 import type { User, UserRole } from "./types"
+import { useRouter } from "next/navigation"
+
+const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
 interface AuthContextType {
   user: User | null
@@ -16,13 +19,11 @@ interface AuthContextType {
   login: (data: { token: string; user: any }) => void
   logout: () => void
   isAuthenticated: boolean
+  loading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-/**
- * 🔁 Backend → Frontend role normalize
- */
 const normalizeRole = (role: string): UserRole => {
   if (role === "superadmin") return "super-admin"
   return role as UserRole
@@ -30,11 +31,12 @@ const normalizeRole = (role: string): UserRole => {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
+  const [token, setToken] = useState<string | null>(() =>
+    typeof window !== "undefined" ? localStorage.getItem("token") : null
+  )
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
-  /**
-   * ✅ Login (API response directly)
-   */
   const login = (data: { token: string; user: any }) => {
     const normalizedUser: User = {
       ...data.user,
@@ -43,33 +45,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setUser(normalizedUser)
     setToken(data.token)
-
     localStorage.setItem("token", data.token)
-    localStorage.setItem("user", JSON.stringify(normalizedUser))
   }
 
-  /**
-   * ✅ Logout
-   */
   const logout = () => {
     setUser(null)
     setToken(null)
     localStorage.removeItem("token")
-    localStorage.removeItem("user")
+    router.push("/") 
   }
 
-  /**
-   * 🔁 Restore auth on refresh
-   */
   useEffect(() => {
-    const storedToken = localStorage.getItem("token")
-    const storedUser = localStorage.getItem("user")
-
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+    if (!token) {
+      setLoading(false)
+      return
     }
-  }, [])
+
+    const restoreAuth = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/api/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!res.ok) throw new Error("Unauthorized")
+
+        const data = await res.json()
+        const normalizedUser: User = {
+          ...data.user,
+          role: normalizeRole(data.user.role),
+        }
+
+        setUser(normalizedUser)
+      } catch (error) {
+        console.error("Failed to restore auth:", error)
+        logout()
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    restoreAuth()
+  }, [token])
+
+  // ✅ Don't render children until loading is done
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>
+  }
 
   return (
     <AuthContext.Provider
@@ -80,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         isAuthenticated: !!user && !!token,
+        loading,
       }}
     >
       {children}

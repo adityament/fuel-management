@@ -18,15 +18,18 @@ interface Attendance {
   longitude?: number
   notes?: string
   timeIn: string
+  timeOut?: string
   date: string
+  workedHours: number;
 }
 
 export default function StaffAttendancePage() {
   const [records, setRecords] = useState<Attendance[]>([])
+  const [activeAttendance, setActiveAttendance] = useState<Attendance | null>(null)
   const [notes, setNotes] = useState("Morning shift")
   const [loading, setLoading] = useState(false)
+  const [timer, setTimer] = useState(0)
 
-  /* ================= GET ATTENDANCE ================= */
   const fetchAttendance = async () => {
     try {
       const token = localStorage.getItem("token")
@@ -37,7 +40,15 @@ export default function StaffAttendancePage() {
       })
 
       const data = await res.json()
-      setRecords(Array.isArray(data) ? data : data.data || [])
+      const list = Array.isArray(data) ? data : data.data || []
+
+      setRecords(list)
+      const latest = list[0]
+      if (latest && !latest.timeOut) {
+        setActiveAttendance(latest)
+      } else {
+        setActiveAttendance(null)
+      }
     } catch (err) {
       console.error("Attendance fetch error", err)
     }
@@ -46,8 +57,6 @@ export default function StaffAttendancePage() {
   useEffect(() => {
     fetchAttendance()
   }, [])
-
-  /* ================= LIVE LOCATION ================= */
   const getLiveLocation = (): Promise<{
     latitude: number
     longitude: number
@@ -64,7 +73,27 @@ export default function StaffAttendancePage() {
     })
   }
 
-  /* ================= CHECK-IN ================= */
+  /* ================= TIMER ================= */
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+
+    if (activeAttendance) {
+      interval = setInterval(() => {
+        const start = new Date(activeAttendance.timeIn).getTime()
+        const now = Date.now()
+        setTimer(Math.floor((now - start) / 1000))
+      }, 1000)
+    }
+
+    return () => clearInterval(interval)
+  }, [activeAttendance])
+
+  const formatTime = (sec: number) => {
+    const h = Math.floor(sec / 3600)
+    const m = Math.floor((sec % 3600) / 60)
+    const s = sec % 60
+    return `${h}h ${m}m ${s}s`
+  }
   const handleCheckIn = async () => {
     try {
       setLoading(true)
@@ -92,54 +121,84 @@ export default function StaffAttendancePage() {
       setLoading(false)
     }
   }
+  const handleCheckOut = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem("token")
+      const location = await getLiveLocation()
 
-  /* ================= TABLE COLUMNS ================= */
-  const columns = [
-    {
-      key: "date",
-      header: "Date",
-      render: (item: Attendance) =>
-        new Date(item.date).toLocaleDateString(),
-    },
-    {
-      key: "timeIn",
-      header: "Check-in Time",
-      render: (item: Attendance) =>
-        new Date(item.timeIn).toLocaleTimeString(),
-    },
-    {
-      key: "action",
-      header: "Action",
-      render: (item: Attendance) => (
-        <span className="capitalize">{item.action}</span>
-      ),
-    },
-    {
-      key: "location",
-      header: "Location",
-      render: (item: Attendance) =>
-        item.latitude && item.longitude ? (
-          <span className="text-xs">
-            {item.latitude.toFixed(4)}, {item.longitude.toFixed(4)}
-          </span>
-        ) : (
-          "-"
-        ),
-    },
-    {
-      key: "notes",
-      header: "Notes",
-      render: (item: Attendance) => item.notes || "-",
-    },
-  ]
+      await fetch(`${BASE_URL}/api/attendance/markattendance`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: "checkout",
+          latitude: location.latitude,
+          longitude: location.longitude,
+          notes: "Ending shift",
+        }),
+      })
+
+      setActiveAttendance(null)
+      setTimer(0)
+      fetchAttendance()
+    } catch (err) {
+      alert("Checkout failed")
+    } finally {
+      setLoading(false)
+    }
+  }
+const formatWorkedHours = (hours?: number) => {
+  if (!hours) return "-"
+  const h = Math.floor(hours)
+  const m = Math.round((hours - h) * 60)
+  return `${h}h ${m}m`
+}
+
+ const columns = [
+  {
+    key: "date",
+    header: "Date",
+    render: (item: Attendance) =>
+      new Date(item.date).toLocaleDateString(),
+  },
+  {
+    key: "timeIn",
+    header: "Check-in",
+    render: (item: Attendance) =>
+      new Date(item.timeIn).toLocaleTimeString(),
+  },
+  {
+    key: "timeOut",
+    header: "Check-out",
+    render: (item: Attendance) =>
+      item.timeOut
+        ? new Date(item.timeOut).toLocaleTimeString()
+        : "-",
+  },
+  {
+    key: "workedHours",
+    header: "Worked Hours",                
+    render: (item: Attendance) =>
+      formatWorkedHours(item.workedHours),
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    render: (item: Attendance) => item.notes || "-",
+  },
+]
+
 
   return (
     <DashboardLayout title="Attendance" requiredRole="staff">
       <div className="space-y-6">
-        {/* CHECK-IN CARD */}
-        <div className="rounded-xl border bg-card p-6">
+        {/* CHECK-IN / CHECK-OUT CARD */}
+        <div className="rounded-xl border bg-card p-6 md:w-125 w-full">
           <h2 className="text-lg font-semibold mb-4">
-            Attendance Check-in
+            Attendance
           </h2>
 
           <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
@@ -147,21 +206,39 @@ export default function StaffAttendancePage() {
             Live location will be captured
           </div>
 
-          <div className="mb-4">
-            <Label>Notes</Label>
-            <Input
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
+          {!activeAttendance && (
+            <div className="mb-4">
+              <Label className="mb-2">Notes</Label>
+              <Input
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+          )}
 
-          <Button onClick={handleCheckIn} disabled={loading}>
-            <Clock className="mr-2 h-4 w-4" />
-            {loading ? "Checking in..." : "Check In"}
-          </Button>
+          {activeAttendance ? (
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-muted-foreground">
+                ⏱ Working Time: <b>{formatTime(timer)}</b>
+              </div>
+
+              <Button
+                variant="destructive"
+                onClick={handleCheckOut}
+                disabled={loading}
+              >
+                Check Out
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={handleCheckIn} disabled={loading}>
+              <Clock className="mr-2 h-4 w-4" />
+              {loading ? "Checking in..." : "Check In"}
+            </Button>
+          )}
         </div>
 
-        {/* TABLE */}
+        {/* HISTORY */}
         <div className="rounded-xl border bg-card p-6">
           <h3 className="text-lg font-semibold mb-4">
             Attendance History
