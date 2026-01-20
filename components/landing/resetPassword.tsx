@@ -54,7 +54,7 @@ export default function ResetPasswordSection() {
       }
 
       toast.success("Password reset successfully!");
-      router.push("/login"); // redirect to login page
+      router.push("/"); 
     } catch (err) {
       console.error(err);
       toast.error("Server not reachable");
