@@ -1,28 +1,32 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
-import { DashboardSidebar } from "./sidebar"
-import { MobileNav } from "./mobile-nav"
-import { DashboardHeader } from "./header"
-import type { UserRole } from "@/lib/types"
+import type React from "react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { DashboardSidebar } from "./sidebar";
+import { MobileNav } from "./mobile-nav";
+import { DashboardHeader } from "./header";
+import type { UserRole } from "@/lib/types";
 
 interface DashboardLayoutProps {
-  children: React.ReactNode
-  title: string
-  requiredRole?: UserRole
+  children: React.ReactNode;
+  title: string;
+  requiredRole?: UserRole;
 }
 
-export function DashboardLayout({ children, title, requiredRole }: DashboardLayoutProps) {
-  const { isAuthenticated, role } = useAuth()
-  const router = useRouter()
+export function DashboardLayout({
+  children,
+  title,
+  requiredRole,
+}: DashboardLayoutProps) {
+  const { isAuthenticated, role } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/")
-      return
+      router.push("/");
+      return;
     }
 
     if (requiredRole && role !== requiredRole) {
@@ -31,22 +35,21 @@ export function DashboardLayout({ children, title, requiredRole }: DashboardLayo
         "super-admin": "/super-admin",
         admin: "/admin",
         staff: "/staff",
-      }
+      };
       if (role) {
-        router.push(routes[role])
+        router.push(routes[role]);
       }
     }
-  }, [isAuthenticated, role, requiredRole, router])
+  }, [isAuthenticated, role, requiredRole, router]);
 
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
-          <p className="text-muted-foreground">Redirecting...</p>
+        <div className="flex justify-center items-center h-full">
+          <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -58,5 +61,5 @@ export function DashboardLayout({ children, title, requiredRole }: DashboardLayo
       </div>
       <MobileNav />
     </div>
-  )
+  );
 }

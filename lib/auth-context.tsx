@@ -88,9 +88,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [token])
 
   // ✅ Don't render children until loading is done
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>
-  }
+ if (loading) {
+  return (
+    <div className="fixed inset-0 flex justify-center items-center bg-white z-50">
+      <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
+}
+
 
   return (
     <AuthContext.Provider
