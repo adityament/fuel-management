@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff } from "lucide-react"
+import { toast } from "react-toastify"
 
 const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
@@ -55,11 +56,11 @@ export function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps)
       const data = await res.json()
 
       if (!res.ok) {
-        alert(data.message || "Failed to add staff")
+        toast.error(data.message || "Failed to create admin")
         return
       }
 
-      // refresh staff list
+      toast.success("Staff created successfully")
       onSubmit()
       onClose()
 

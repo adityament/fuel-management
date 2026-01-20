@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
 import { Fuel, Eye, EyeOff } from "lucide-react";
+import { toast } from "react-toastify";
+
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -27,32 +29,43 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
     try {
       const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
+
       if (!BASE_URL) {
-        alert("Backend URL missing");
+        toast.error("Backend URL missing");
         return;
       }
+
       const res = await fetch(`${BASE_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+
       const data = await res.json();
+
       if (!res.ok) {
-        alert(data.message || "Invalid credentials");
+        toast.error(data.message || "Invalid credentials");
         return;
       }
+
+      toast.success("Login successful 🎉");
+
       login({ token: data.token, user: data.user });
       onClose();
-      const role = data.user.role === "superadmin" ? "super-admin" : data.user.role;
+
+      const role =
+        data.user.role === "superadmin" ? "super-admin" : data.user.role;
+
       const routes: Record<string, string> = {
         "super-admin": "/super-admin",
         admin: "/admin",
         staff: "/staff",
       };
+
       router.push(routes[role]);
     } catch (err) {
       console.error(err);
-      alert("Server not reachable");
+      toast.error("Server not reachable");
     }
   };
 
@@ -92,7 +105,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="pr-10"           // space for eye icon
+              className="pr-10"
             />
             <button
               type="button"

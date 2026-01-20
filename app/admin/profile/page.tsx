@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MapPin, Mail, Phone, User, EyeOff, Eye } from "lucide-react";
+import { toast } from "react-toastify";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
@@ -19,7 +20,7 @@ export default function AdminProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const handlePasswordUpdate = async () => {
     if (!oldPassword || !newPassword) {
-      alert("Please fill both fields");
+      toast.error("Please fill both fields");
       return;
     }
     setLoading(true);
@@ -36,15 +37,15 @@ export default function AdminProfilePage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert("Password updated successfully!");
+        toast.success("Password updated successfully!");
         setOldPassword("");
         setNewPassword("");
       } else {
-        alert(data.message || "Failed to update password");
+       toast.error(data.message || "Failed to create admin")
       }
     } catch (error) {
       console.error(error);
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }

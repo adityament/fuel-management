@@ -1,30 +1,35 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Modal } from "@/components/ui/modal"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Eye, EyeOff } from "lucide-react"
+import type React from "react";
+import { useState } from "react";
+import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
+import { toast } from "react-toastify";
 
 interface AddAdminModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: AdminFormData) => void
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: AdminFormData) => void;
 }
 
 export interface AdminFormData {
-  username: string
-  email: string
-  password: string
-  phone: string
-  latitude: number
-  longitude: number
-  radius: number
+  username: string;
+  email: string;
+  password: string;
+  phone: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
 }
 
-export function AddAdminModal({ isOpen, onClose, onSubmit }: AddAdminModalProps) {
+export function AddAdminModal({
+  isOpen,
+  onClose,
+  onSubmit,
+}: AddAdminModalProps) {
   const [formData, setFormData] = useState<AdminFormData>({
     username: "",
     email: "",
@@ -33,10 +38,10 @@ export function AddAdminModal({ isOpen, onClose, onSubmit }: AddAdminModalProps)
     latitude: 0,
     longitude: 0,
     radius: 0,
-  })
+  });
 
-  const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const resetForm = () => {
     setFormData({
@@ -47,20 +52,20 @@ export function AddAdminModal({ isOpen, onClose, onSubmit }: AddAdminModalProps)
       latitude: 0,
       longitude: 0,
       radius: 0,
-    })
-  }
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     try {
-      setLoading(true)
+      setLoading(true);
 
-      const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
-      if (!BASE_URL) return alert("Backend URL missing")
+      const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
+      if (!BASE_URL) return alert("Backend URL missing");
 
-      const token = localStorage.getItem("token")
-      if (!token) return alert("Please login again")
+      const token = localStorage.getItem("token");
+      if (!token) return alert("Please login again");
 
       const res = await fetch(`${BASE_URL}/api/registeradmin`, {
         method: "POST",
@@ -69,24 +74,32 @@ export function AddAdminModal({ isOpen, onClose, onSubmit }: AddAdminModalProps)
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
-      })
+      });
 
-      const data = await res.json()
-      if (!res.ok) return alert(data.message || "Failed to create admin")
-
-      onSubmit(formData)
-      resetForm()
-      onClose()
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to create admin");
+        return;
+      }
+      toast.success("Admin created successfully");
+      onSubmit(formData);
+      resetForm();
+      onClose();
     } catch (err) {
-      console.error(err)
-      alert("Server not reachable")
+      console.error(err);
+      alert("Server not reachable");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add New Admin" className="max-w-lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Add New Admin"
+      className="max-w-lg"
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
@@ -94,7 +107,9 @@ export function AddAdminModal({ isOpen, onClose, onSubmit }: AddAdminModalProps)
             <Input
               id="username"
               value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, username: e.target.value })
+              }
               required
             />
           </div>
@@ -104,7 +119,9 @@ export function AddAdminModal({ isOpen, onClose, onSubmit }: AddAdminModalProps)
             <Input
               id="phone"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
               required
             />
           </div>
@@ -116,7 +133,9 @@ export function AddAdminModal({ isOpen, onClose, onSubmit }: AddAdminModalProps)
             id="email"
             type="email"
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
             required
           />
         </div>
@@ -129,7 +148,9 @@ export function AddAdminModal({ isOpen, onClose, onSubmit }: AddAdminModalProps)
               id="password"
               type={showPassword ? "text" : "password"}
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
               required
             />
             <button
@@ -192,8 +213,8 @@ export function AddAdminModal({ isOpen, onClose, onSubmit }: AddAdminModalProps)
             type="button"
             variant="outline"
             onClick={() => {
-              resetForm()
-              onClose()
+              resetForm();
+              onClose();
             }}
             className="flex-1 bg-transparent"
           >
@@ -206,5 +227,5 @@ export function AddAdminModal({ isOpen, onClose, onSubmit }: AddAdminModalProps)
         </div>
       </form>
     </Modal>
-  )
+  );
 }
