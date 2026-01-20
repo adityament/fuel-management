@@ -72,7 +72,7 @@ export default function ResetPasswordSection() {
   }
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-center h-screen p-4">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md space-y-6 p-6 border rounded-lg shadow-md"
