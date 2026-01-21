@@ -1,13 +1,16 @@
 // app/layout.tsx
 import type React from "react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Roboto } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { ToastContainer } from "react-toastify";
 import "./globals.css";
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["100", "300", "400", "500", "700", "900"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "FuelFlow - Petrol Pump Management System",
@@ -23,7 +26,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased">
+      <body className={roboto.className}>
         <AuthProvider>{children}</AuthProvider>
 
          <ToastContainer
