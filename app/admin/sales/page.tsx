@@ -152,7 +152,8 @@ export default function AdminSalesPage() {
     <DashboardLayout title="Sales" requiredRole="admin">
       <div className="space-y-6">
         {/* ACTION BAR */}
-        <div className="flex flex-wrap justify-between gap-2">
+        <div className="flex justify-end">
+          <div className="flex flex-wrap  gap-2">
           <DownloadButtons sales={filteredSales} variant="dropdown" />
 
           <div className="flex gap-2">
@@ -169,6 +170,7 @@ export default function AdminSalesPage() {
               <Plus className="mr-2 h-4 w-4" /> Add Sale
             </Button>
           </div>
+        </div>
         </div>
 
         {/* FILTERS */}

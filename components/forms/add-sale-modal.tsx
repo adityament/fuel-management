@@ -1,38 +1,39 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Modal } from "@/components/ui/modal"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import type React from "react";
+import { useState } from "react";
+import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
+import { toast } from "react-toastify";
 
 interface AddSaleModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: SaleFormData) => void
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: SaleFormData) => void;
 }
 
 export interface SaleFormData {
-  nozzleId: string
-  fuelType: "Petrol" | "Diesel" | "Premium"
-  openingReading: number
-  closingReading: number
-  rate: number
-  paymentMode: "cash" | "card" | "upi"
-  customerId: string
+  nozzleId: string;
+  fuelType: "Petrol" | "Diesel" | "Premium";
+  openingReading: number;
+  closingReading: number;
+  rate: number;
+  paymentMode: "cash" | "card" | "upi";
+  customerId: string;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
+const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
-const NOZZLE_OPTIONS = ["NOZZLE_1", "NOZZLE_2", "NOZZLE_3", "NOZZLE_4"]
+const NOZZLE_OPTIONS = ["NOZZLE_1", "NOZZLE_2", "NOZZLE_3", "NOZZLE_4"];
 
 export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
   const [formData, setFormData] = useState<SaleFormData>({
@@ -43,23 +44,23 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
     rate: 0,
     paymentMode: "cash",
     customerId: "CUST_001",
-  })
+  });
 
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
 
-  const quantity = formData.closingReading - formData.openingReading
-  const amount = quantity * formData.rate
+  const quantity = formData.closingReading - formData.openingReading;
+  const amount = quantity * formData.rate;
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const token = localStorage.getItem("token")
+    const token = localStorage.getItem("token");
     if (!token) {
-      alert("Please login again")
-      return
+      alert("Please login again");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
       const res = await fetch(`${BASE_URL}/api/sales/create`, {
@@ -69,39 +70,41 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
-      })
+      });
 
-      const data = await res.json()
+      const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message || "Failed to create sale")
-        return
+        toast.error(data.message || "Failed to create sale");
+        return;
       }
-
-      onSubmit(formData)
-      onClose()
+      toast.success("Sale added successfully!");
+      onSubmit(formData);
+      onClose();
     } catch (err) {
-      alert("Server not reachable")
+      alert("Server not reachable");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add New Sale" className="max-w-lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Add New Sale"
+      className="max-w-lg"
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
-
         {/* Nozzle + Fuel */}
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Nozzle ID</Label>
             <Select
               value={formData.nozzleId}
-              onValueChange={(v) =>
-                setFormData({ ...formData, nozzleId: v })
-              }
+              onValueChange={(v) => setFormData({ ...formData, nozzleId: v })}
             >
-              <SelectTrigger >
+              <SelectTrigger>
                 <SelectValue placeholder="Select Nozzle" />
               </SelectTrigger>
               <SelectContent>
@@ -245,5 +248,5 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
         </div>
       </form>
     </Modal>
-  )
+  );
 }
