@@ -148,7 +148,7 @@ export default function StaffProfilePage() {
        </div>
 
         {/* Grids */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Profile Details */}
           <div className="rounded-xl border border-border bg-card p-6">
             <h3 className="text-lg font-semibold text-card-foreground mb-4">
