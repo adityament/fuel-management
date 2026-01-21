@@ -12,6 +12,8 @@ import { AddSaleModal, type SaleFormData } from "@/components/forms/add-sale-mod
 import type { Sale } from "@/lib/types"
 import { Plus, Filter, IndianRupee, Droplets, Receipt } from "lucide-react"
 
+
+
 const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
 export default function AdminSalesPage() {
@@ -24,9 +26,6 @@ export default function AdminSalesPage() {
     fuelType: "all",
   })
 
-  /* =======================
-     🔹 GET ALL SALES
-  ======================= */
   useEffect(() => {
     const fetchSales = async () => {
       try {
@@ -37,6 +36,8 @@ export default function AdminSalesPage() {
             Authorization: `Bearer ${token}`,
           },
         })
+
+        if (!res.ok) throw new Error("Failed to fetch sales")
 
         const data = await res.json()
 
@@ -51,23 +52,20 @@ export default function AdminSalesPage() {
           amount: item.amount,
           paymentMode: item.paymentMode,
           shift: item.shift,
-          date: item.date.split("T")[0],
+          date: item.date,                      // ← full ISO string rakho (split mat karo)
           customerId: item.customerId,
           staffId: item.createdBy,
         }))
 
         setSalesList(formatted)
       } catch (err) {
-        console.error("Sales fetch failed", err)
+        console.error("Sales fetch failed:", err)
       }
     }
 
     fetchSales()
   }, [])
 
-  /* =======================
-     🔹 ADD SALE (LOCAL)
-  ======================= */
   const handleAddSale = (data: SaleFormData) => {
     const qty = data.closingReading - data.openingReading
 
@@ -82,7 +80,7 @@ export default function AdminSalesPage() {
       amount: qty * data.rate,
       paymentMode: data.paymentMode,
       shift: "morning",
-      date: new Date().toISOString().split("T")[0],
+      date: new Date().toISOString(),           // ← full timestamp
       customerId: data.customerId,
       staffId: "STAFF",
     }
@@ -90,22 +88,12 @@ export default function AdminSalesPage() {
     setSalesList((prev) => [...prev, newSale])
   }
 
-  /* =======================
-     🔹 FILTERED DATA
-  ======================= */
   const filteredSales = salesList.filter((sale) => {
-    if (filters.nozzleId !== "all" && sale.nozzleId !== filters.nozzleId)
-      return false
-
-    if (filters.fuelType !== "all" && sale.fuelType !== filters.fuelType)
-      return false
-
+    if (filters.nozzleId !== "all" && sale.nozzleId !== filters.nozzleId) return false
+    if (filters.fuelType !== "all" && sale.fuelType !== filters.fuelType) return false
     return true
   })
 
-  /* =======================
-     🔹 FILTER OPTIONS
-  ======================= */
   const nozzleOptions = [
     { value: "all", label: "All Nozzles" },
     ...Array.from(new Set(salesList.map((s) => s.nozzleId))).map((id) => ({
@@ -120,69 +108,49 @@ export default function AdminSalesPage() {
     { value: "Diesel", label: "Diesel" },
   ]
 
-  /* =======================
-     🔹 TABLE COLUMNS
-  ======================= */
- const columns = [
-  { key: "nozzleId", header: "Nozzle ID" },
-  {
-    key: "fuelType",
-    header: "Fuel Type",
-    render: (i: Sale) => (
-      <StatusBadge variant={i.fuelType === "Petrol" ? "petrol" : "diesel"}>
-        {i.fuelType}
-      </StatusBadge>
-    ),
-  },
-  { key: "openingReading", header: "Opening" },
-  { key: "closingReading", header: "Closing" },
-  { key: "rate", header: "Rate" },
-  {
-    key: "amount",
-    header: "Total Amount",
-    render: (i: Sale) => `₹${i.amount}`,
-  },
-  { key: "date", header: "Date" },
-
-  // 👇 ACTION COLUMN (LAST)
-  {
-    key: "actions",
-    header: "Action",
-    render: (row: Sale) => (
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          className="bg-green-500 text-white"
-          variant="outline"
-          onClick={() => {
-            console.log("Edit", row.id)
-            // edit logic / modal open
-          }}
-        >
-          Edit
-        </Button>
-
-        <Button
-          size="sm"
-          className="bg-red-500 text-white"
-          variant="outline"
-          onClick={() => {
-            console.log("Delete", row.id)
-            // delete logic
-          }}
-        >
-          Delete
-        </Button>
-      </div>
-    ),
-  },
-]
-
+  const columns = [
+    { key: "nozzleId", header: "Nozzle ID" },
+    {
+      key: "fuelType",
+      header: "Fuel Type",
+      render: (i: Sale) => (
+        <StatusBadge variant={i.fuelType === "Petrol" ? "petrol" : "diesel"}>
+          {i.fuelType}
+        </StatusBadge>
+      ),
+    },
+    { key: "openingReading", header: "Opening" },
+    { key: "closingReading", header: "Closing" },
+    { key: "rate", header: "Rate" },
+    {
+      key: "amount",
+      header: "Total Amount",
+      render: (i: Sale) => `₹${i.amount.toLocaleString("en-IN")}`,
+    },
+    // {
+    //   key: "date",
+    //   header: "Date & Time",
+    //   render: (sale: Sale) => formatDateTime(sale.date),   // ← yahan helper use kar rahe hain
+    // },
+    {
+      key: "actions",
+      header: "Action",
+      render: (row: Sale) => (
+        <div className="flex gap-2">
+          <Button size="sm" className="bg-green-500 text-white" variant="outline">
+            Edit
+          </Button>
+          <Button size="sm" className="bg-red-500 text-white" variant="outline">
+            Delete
+          </Button>
+        </div>
+      ),
+    },
+  ]
 
   return (
     <DashboardLayout title="Sales" requiredRole="admin">
       <div className="space-y-6">
-
         {/* ACTION BAR */}
         <div className="flex flex-wrap justify-between gap-2">
           <DownloadButtons sales={filteredSales} variant="dropdown" />
@@ -203,7 +171,7 @@ export default function AdminSalesPage() {
           </div>
         </div>
 
-        {/* FILTER SECTION */}
+        {/* FILTERS */}
         {showFilters && (
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="grid gap-4 md:grid-cols-3">
@@ -213,21 +181,17 @@ export default function AdminSalesPage() {
                 value={filters.nozzleId}
                 onValueChange={(v) => setFilters({ ...filters, nozzleId: v })}
               />
-
               <FormSelect
                 label="Fuel Type"
                 options={fuelTypeOptions}
                 value={filters.fuelType}
                 onValueChange={(v) => setFilters({ ...filters, fuelType: v })}
               />
-
               <div className="flex items-end">
                 <Button
                   variant="outline"
                   className="w-full bg-transparent"
-                  onClick={() =>
-                    setFilters({ nozzleId: "all", fuelType: "all" })
-                  }
+                  onClick={() => setFilters({ nozzleId: "all", fuelType: "all" })}
                 >
                   Clear Filters
                 </Button>
@@ -236,16 +200,16 @@ export default function AdminSalesPage() {
           </div>
         )}
 
-        {/* SUMMARY */}
+        {/* SUMMARY CARDS */}
         <div className="grid gap-4 md:grid-cols-3">
           <SummaryCard
             title="Total Sales"
-            value={`₹${filteredSales.reduce((s, i) => s + i.amount, 0)}`}
+            value={`₹${filteredSales.reduce((s, i) => s + i.amount, 0).toLocaleString("en-IN")}`}
             icon={IndianRupee}
           />
           <SummaryCard
             title="Total Quantity"
-            value={`${filteredSales.reduce((s, i) => s + i.quantity, 0)} L`}
+            value={`${filteredSales.reduce((s, i) => s + i.quantity, 0).toFixed(2)} L`}
             icon={Droplets}
           />
           <SummaryCard
@@ -262,7 +226,7 @@ export default function AdminSalesPage() {
             columns={columns}
             pageSize={5}
             searchPlaceholder="Search sales..."
-            searchKeys={["id", "nozzleId"]}
+            searchKeys={["nozzleId", "fuelType", "paymentMode"]}
           />
         </div>
       </div>

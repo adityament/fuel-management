@@ -73,3 +73,20 @@ export interface Stock {
   totalStock: number
   closingStock: number
 }
+export interface CompanyInfo {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  website: string;
+  logo: string;
+}
+
+export const DEFAULT_COMPANY: CompanyInfo = {
+  name: "FuelPro Management System",
+  address: "123 Fuel Station Road, Petroleum City, PC 12345",
+  phone: "+91 98765 43210",
+  email: "support@fuelpro.com",
+  website: "www.fuelpro.com",
+  logo: "⛽",
+};

@@ -1,19 +1,20 @@
 import type { Sale } from "@/lib/types"
-import { useAuth } from "./auth-context";
 
-// Company info for reports
-export const companyInfo = {
-  name: "FuelPro Management System",
-  address: "123 Fuel Station Road, Petroleum City, PC 12345",
-  phone: "+91 98765 43210",
-  email: "support@fuelpro.com",
-  website: "www.fuelpro.com",
-  logo: "⛽",
+// Assuming your user type looks something like this (adjust as per your actual user)
+interface UserForReport {
+  username?: string
+  email?: string
+  phone?: string
+  location?: {
+    latitude?: number
+    longitude?: number
+  }
+  // ... other fields
 }
- 
 
 const IST_TIMEZONE = "Asia/Kolkata"
 
+// Formatting functions same as before...
 export function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString("en-IN", {
     timeZone: IST_TIMEZONE,
@@ -33,14 +34,24 @@ export function formatTime(date: Date | string): string {
 }
 
 export function formatDateTime(date: Date | string): string {
-  return `${formatDate(date)} ${formatTime(date)}`
+  if (!date) return "—"
+  return new Date(date).toLocaleString("en-IN", {
+    timeZone: IST_TIMEZONE,
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  })
 }
-
 
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(amount)
 }
 
@@ -52,7 +63,6 @@ export function generateReportId(): string {
     .replace(/:/g, "")}`
 }
 
-// ---------- Summary ----------
 export function calculateSalesSummary(sales: Sale[]) {
   return {
     totalRevenue: sales.reduce((s, i) => s + i.amount, 0),
@@ -61,8 +71,17 @@ export function calculateSalesSummary(sales: Sale[]) {
   }
 }
 
-// ---------- PDF EXPORT ----------
-export function exportToPDF(sales: Sale[]): void {
+// PDF – user se details le raha hai
+export function exportToPDF(sales: Sale[], user?: UserForReport): void {
+  const name = user?.username || "Fuel Pump Admin"
+  const email = user?.email || "admin@fuelpump.local"
+  const phone = user?.phone || "Not set"
+  const locationStr = user?.location?.latitude && user?.location?.longitude
+    ? `Lat: ${user.location.latitude.toFixed(6)}, Lng: ${user.location.longitude.toFixed(6)}`
+    : "Location not set"
+
+  const logo = "⛽" // ya user initials se bana sakte ho: user?.username?.charAt(0)?.toUpperCase() || "A"
+
   const reportId = generateReportId()
   const generatedAt = formatDateTime(new Date())
   const summary = calculateSalesSummary(sales)
@@ -71,35 +90,34 @@ export function exportToPDF(sales: Sale[]): void {
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sales Report</title>
+  <title>Sales Report - ${reportId}</title>
   <style>
-    body { font-family: Arial; font-size: 11px; padding: 20px }
-    h2 { color: #f97316 }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px }
-    th, td { border: 1px solid #ddd; padding: 6px }
-    th { background: #f97316; color: white }
-    tr:nth-child(even) { background: #fafafa }
-    .summary { display: flex; gap: 20px; margin: 15px 0 }
-    .card { border: 1px solid #ddd; padding: 10px; flex: 1 }
+    body { font-family: Arial, sans-serif; font-size: 11px; padding: 20px; color: #333; }
+    h2 { color: #f97316; margin-bottom: 8px; }
+    h3 { color: #444; margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #f97316; color: white; }
+    tr:nth-child(even) { background: #fafafa; }
+    .summary { display: flex; gap: 16px; margin: 20px 0; }
+    .card { border: 1px solid #e5e7eb; padding: 12px; flex: 1; border-radius: 6px; background: #fff; }
+    .meta { margin-bottom: 20px; font-size: 12px; }
   </style>
 </head>
 <body>
 
-<h2>${companyInfo.logo} ${companyInfo.name}</h2>
-<p>
-${companyInfo.address}<br/>
-Phone: ${companyInfo.phone} | ${companyInfo.email}
-</p>
+<h2>${logo} ${name}</h2>
+<p style="margin: 4px 0;">${locationStr}<br/>Phone: ${phone} | ${email}</p>
 
-<p>
-<b>Report ID:</b> ${reportId}<br/>
-<b>Generated:</b> ${generatedAt}
-</p>
+<div class="meta">
+  <b>Report ID:</b> ${reportId}<br/>
+  <b>Generated:</b> ${generatedAt}
+</div>
 
 <div class="summary">
   <div class="card"><b>Total Revenue</b><br/>${formatCurrency(summary.totalRevenue)}</div>
   <div class="card"><b>Total Quantity</b><br/>${summary.totalQuantity.toFixed(2)} L</div>
-  <div class="card"><b>Total Transactions</b><br/>${summary.totalTransactions}</div>
+  <div class="card"><b>Transactions</b><br/>${summary.totalTransactions}</div>
 </div>
 
 <h3>Transaction Details</h3>
@@ -108,11 +126,11 @@ Phone: ${companyInfo.phone} | ${companyInfo.email}
 <thead>
 <tr>
   <th>Date & Time</th>
-  <th>Nozzle ID</th>
-  <th>Fuel Type</th>
+  <th>Nozzle</th>
+  <th>Fuel</th>
   <th>Opening</th>
   <th>Closing</th>
-  <th>Quantity</th>
+  <th>Qty (L)</th>
   <th>Rate</th>
   <th>Amount</th>
   <th>Payment</th>
@@ -132,47 +150,46 @@ ${sales
   <td>${formatCurrency(s.rate)}</td>
   <td>${formatCurrency(s.amount)}</td>
   <td>${s.paymentMode}</td>
-</tr>
-`,
+</tr>`,
   )
   .join("")}
 </tbody>
 </table>
 
-<p style="margin-top:20px;font-size:10px">
-Computer generated report – No signature required
+<p style="margin-top:30px; font-size:10px; color:#666; text-align:center;">
+  Computer generated report – No signature required
 </p>
 
 </body>
 </html>
-`
+  `
 
   const win = window.open("", "_blank")
   if (win) {
     win.document.write(html)
     win.document.close()
-    win.print()
+    setTimeout(() => win.print(), 500)
   }
 }
 
-// ---------- EXCEL (CSV) EXPORT ----------
-export function exportToExcel(sales: Sale[]): void {
+// CSV – user se details
+export function exportToExcel(sales: Sale[], user?: UserForReport): void {
+  const name = user?.username || "Fuel Pump Admin"
   const reportId = generateReportId()
   const rows: string[] = []
 
-  rows.push(`"${companyInfo.name}"`)
+  rows.push(`"${name}"`)
   rows.push(`"SALES REPORT","${reportId}"`)
+  rows.push(`"Generated","${formatDateTime(new Date())}"`)
   rows.push("")
 
   rows.push(
-    `"Date","Time","Nozzle ID","Fuel Type","Opening","Closing","Quantity","Rate","Amount","Payment Mode"`,
+    `"Date & Time","Nozzle ID","Fuel Type","Opening Reading","Closing Reading","Quantity (L)","Rate","Amount","Payment Mode"`,
   )
 
   sales.forEach((s) => {
     rows.push(
-      `"${formatDate(s.date)}","${formatTime(s.date)}","${s.nozzleId}","${s.fuelType}",
-       "${s.openingReading}","${s.closingReading}",
-       "${s.quantity}","${s.rate}","${s.amount}","${s.paymentMode}"`,
+      `"${formatDateTime(s.date)}","${s.nozzleId}","${s.fuelType}","${s.openingReading}","${s.closingReading}","${s.quantity.toFixed(2)}","${s.rate}","${s.amount}","${s.paymentMode}"`,
     )
   })
 
