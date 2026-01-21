@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
 import { Fuel, Eye, EyeOff } from "lucide-react";
 import { toast } from "react-toastify";
+import Link from "next/link";
 
 
 interface LoginModalProps {
@@ -115,6 +116,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+        <Link href="/forgot-password">  <p className="text-end text-muted-foreground hover:text-foreground text-sm underline font-semibold my-2">Forgot your password?</p></Link>
         </div>
 
         <Button type="submit" className="w-full">
