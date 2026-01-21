@@ -123,27 +123,61 @@ export default function AdminSalesPage() {
   /* =======================
      🔹 TABLE COLUMNS
   ======================= */
-  const columns = [
-    { key: "nozzleId", header: "Nozzle ID" },
-    {
-      key: "fuelType",
-      header: "Fuel Type",
-      render: (i: Sale) => (
-        <StatusBadge variant={i.fuelType === "Petrol" ? "petrol" : "diesel"}>
-          {i.fuelType}
-        </StatusBadge>
-      ),
-    },
-    { key: "openingReading", header: "Opening" },
-    { key: "closingReading", header: "Closing" },
-    { key: "rate", header: "Rate" },
-    {
-      key: "amount",
-      header: "Total Amount",
-      render: (i: Sale) => `₹${i.amount}`,
-    },
-    { key: "date", header: "Date" },
-  ]
+ const columns = [
+  { key: "nozzleId", header: "Nozzle ID" },
+  {
+    key: "fuelType",
+    header: "Fuel Type",
+    render: (i: Sale) => (
+      <StatusBadge variant={i.fuelType === "Petrol" ? "petrol" : "diesel"}>
+        {i.fuelType}
+      </StatusBadge>
+    ),
+  },
+  { key: "openingReading", header: "Opening" },
+  { key: "closingReading", header: "Closing" },
+  { key: "rate", header: "Rate" },
+  {
+    key: "amount",
+    header: "Total Amount",
+    render: (i: Sale) => `₹${i.amount}`,
+  },
+  { key: "date", header: "Date" },
+
+  // 👇 ACTION COLUMN (LAST)
+  {
+    key: "actions",
+    header: "Action",
+    render: (row: Sale) => (
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          className="bg-green-500 text-white"
+          variant="outline"
+          onClick={() => {
+            console.log("Edit", row.id)
+            // edit logic / modal open
+          }}
+        >
+          Edit
+        </Button>
+
+        <Button
+          size="sm"
+          className="bg-red-500 text-white"
+          variant="outline"
+          onClick={() => {
+            console.log("Delete", row.id)
+            // delete logic
+          }}
+        >
+          Delete
+        </Button>
+      </div>
+    ),
+  },
+]
+
 
   return (
     <DashboardLayout title="Sales" requiredRole="admin">

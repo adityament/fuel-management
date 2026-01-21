@@ -12,17 +12,53 @@ import { toast } from "react-toastify";
 const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 export default function AdminProfilePage() {
-  const { user, token } = useAuth(); // make sure token is available
+  const { user, token } = useAuth();
+
+  /* ================= PASSWORD STATES (UNCHANGED) ================= */
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
- const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+
+  /* ================= PROFILE SINGLE STATE ================= */
+  const [profile, setProfile] = useState({
+    username: user?.username || "",
+    phone: user?.phone || "",
+    location: {
+      latitude: user?.location?.latitude || "",
+      longitude: user?.location?.longitude || "",
+      radius: user?.location?.radius || 100,
+    },
+  });
+
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  /* ================= HANDLERS ================= */
+  const handleChange = (field: string, value: any) => {
+    setProfile((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleLocationChange = (field: string, value: any) => {
+    setProfile((prev) => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        [field]: value,
+      },
+    }));
+  };
+
+  /* ================= PASSWORD UPDATE (UNCHANGED) ================= */
   const handlePasswordUpdate = async () => {
     if (!oldPassword || !newPassword) {
       toast.error("Please fill both fields");
       return;
     }
+
     setLoading(true);
     try {
       const res = await fetch(`${BASE_URL}/api/password/update-password`, {
@@ -41,7 +77,7 @@ export default function AdminProfilePage() {
         setOldPassword("");
         setNewPassword("");
       } else {
-       toast.error(data.message || "Failed to create admin")
+        toast.error(data.message || "Failed to update password");
       }
     } catch (error) {
       console.error(error);
@@ -51,11 +87,49 @@ export default function AdminProfilePage() {
     }
   };
 
+  /* ================= PROFILE UPDATE ================= */
+  const handleProfileUpdate = async () => {
+    setProfileLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/api/admin/update`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username: profile.username,
+          phone: profile.phone,
+          location: {
+            latitude: Number(profile.location.latitude),
+            longitude: Number(profile.location.longitude),
+            radius: Number(profile.location.radius),
+          },
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Profile updated successfully");
+      } else {
+        toast.error(data.message || "Profile update failed");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong");
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
   return (
     <DashboardLayout title="My Profile" requiredRole="admin">
       <div className="grid grid-cols-1 space-y-6">
-        {/* Top Grid */}
+
+        {/* ================= TOP GRID ================= */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
           {/* Profile Header */}
           <div className="rounded-xl border border-border bg-card p-6">
             <div className="flex items-center gap-4">
@@ -65,174 +139,181 @@ export default function AdminProfilePage() {
                 </span>
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-card-foreground">
-                  {user?.username}
-                </h2>
+                <h2 className="text-xl font-semibold">{user?.username}</h2>
                 <p className="text-sm text-muted-foreground capitalize">
-                  {user?.role?.replace("-", " ")}
+                  {user?.role}
                 </p>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>
               </div>
             </div>
           </div>
 
-          {/* Update Password Card */}
+          {/* Update Password */}
           <div className="rounded-xl border border-border bg-card p-4">
-          <h3 className="text-lg font-semibold text-card-foreground mb-4">
-            Update Your Password
-          </h3>
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handlePasswordUpdate();
-            }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              {/* Old Password */}
-              <div className="space-y-2">
-                <Label htmlFor="oldPassword">Old Password</Label>
-                <div className="relative">
-                  <Input
-                    id="oldPassword"
-                    type={showOldPassword ? "text" : "password"}
-                    placeholder="Enter old password"
-                    value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    onClick={() => setShowOldPassword(!showOldPassword)}
-                  >
-                    {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
+            <h3 className="text-lg font-semibold mb-4">
+              Update Your Password
+            </h3>
 
-              {/* New Password */}
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
-                <div className="relative">
-                  <Input
-                    id="newPassword"
-                    type={showNewPassword ? "text" : "password"}
-                    placeholder="Enter new password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                  >
-                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handlePasswordUpdate();
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
 
-              <div className="flex md:justify-start">
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className={loading ? "opacity-70 cursor-not-allowed" : ""}
-                >
+                <div className="space-y-2">
+                  <Label>Old Password</Label>
+                  <div className="relative">
+                    <Input
+                      type={showOldPassword ? "text" : "password"}
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                      onClick={() => setShowOldPassword(!showOldPassword)}
+                    >
+                      {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>New Password</Label>
+                  <div className="relative">
+                    <Input
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <Button type="submit" disabled={loading}>
                   {loading ? "Updating..." : "Update Password"}
                 </Button>
               </div>
-            </div>
-          </form>
-        </div>
+            </form>
+          </div>
         </div>
 
-        {/* Bottom Grid */}
+        {/* ================= BOTTOM GRID ================= */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Profile Details */}
+
+          {/* Profile Info */}
           <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="text-lg font-semibold text-card-foreground mb-4">
-              Profile Information
-            </h3>
+            <h3 className="text-lg font-semibold mb-4">Profile Information</h3>
+
             <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <User className="h-5 w-5 text-muted-foreground" />
+              <div className="flex gap-3 p-3 bg-muted/50 rounded-lg items-center items-center">
+                <User size={18} />
                 <div>
                   <p className="text-sm text-muted-foreground">Username</p>
-                  <p className="font-medium text-card-foreground">
-                    {user?.username}
-                  </p>
+                  <p>{user?.username}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <Mail className="h-5 w-5 text-muted-foreground" />
+
+              <div className="flex gap-3 p-3 bg-muted/50 rounded-lg items-center ">
+                <Mail size={18} />
                 <div>
                   <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium text-card-foreground">
-                    {user?.email}
-                  </p>
+                  <p>{user?.email}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <Phone className="h-5 w-5 text-muted-foreground" />
+
+              <div className="flex gap-3 p-3 bg-muted/50 rounded-lg items-center">
+                <Phone size={18} />
                 <div>
                   <p className="text-sm text-muted-foreground">Phone</p>
-                  <p className="font-medium text-card-foreground">
-                    {user?.phone || "9876543210"}
-                  </p>
+                  <p>{profile.phone || "-"}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
+
+              <div className="flex gap-3 p-3 bg-muted/50 rounded-lg items-center">
+                <MapPin size={18} />
                 <div>
                   <p className="text-sm text-muted-foreground">Pump Location</p>
-                  <p className="font-medium text-card-foreground">
-                    {user?.latitude?.toFixed(4) || "25.1235"},{" "}
-                    {user?.longitude?.toFixed(4) || "84.6543"}
+                  <p>
+                    {profile.location.latitude || "-"},{" "}
+                    {profile.location.longitude || "-"}
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Edit Profile Form */}
+          {/* Update Profile */}
           <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="text-lg font-semibold text-card-foreground mb-4">
-              Update Profile
-            </h3>
-            <form className="space-y-4">
-              <div className="grid gap-4 grid-cols-1">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input id="username" defaultValue={user?.username} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+            <h3 className="text-lg font-semibold mb-4">Update Profile</h3>
+
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2">Username</Label>
+                <Input
+                  value={profile.username}
+                  onChange={(e) =>
+                    handleChange("username", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label className="mb-2">Phone</Label>
+                <Input
+                  value={profile.phone}
+                  onChange={(e) =>
+                    handleChange("phone", e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label className="mb-2">Latitude</Label>
                   <Input
-                    id="phone"
-                    defaultValue={user?.phone || "9876543210"}
+                    value={profile.location.latitude}
+                    onChange={(e) =>
+                      handleLocationChange("latitude", e.target.value)
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className="mb-2">Longitude</Label>
+                  <Input
+                    value={profile.location.longitude}
+                    onChange={(e) =>
+                      handleLocationChange("longitude", e.target.value)
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className="mb-2">Radius (m)</Label>
+                  <Input
+                    value={profile.location.radius}
+                    onChange={(e) =>
+                      handleLocationChange("radius", e.target.value)
+                    }
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" defaultValue={user?.email} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Leave blank to keep current"
-                />
-              </div>
+
               <Button
-                type="button"
-                onClick={() => alert("Profile updated (static demo)")}
+                onClick={handleProfileUpdate}
+                disabled={profileLoading}
               >
-                Save Changes
+                {profileLoading ? "Saving..." : "Save Changes"}
               </Button>
-            </form>
+            </div>
           </div>
         </div>
       </div>

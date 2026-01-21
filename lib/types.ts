@@ -8,9 +8,11 @@ export interface User {
   email: string
   phone?: string
   role: UserRole
-  latitude?: number
-  longitude?: number
-  radius?: number
+   location?: {
+    latitude?: number;
+    longitude?: number;
+    radius?: number;
+  };
 }
 
 export interface Admin {

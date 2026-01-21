@@ -32,15 +32,17 @@ export interface SaleFormData {
 
 const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
+const NOZZLE_OPTIONS = ["NOZZLE_1", "NOZZLE_2", "NOZZLE_3", "NOZZLE_4"]
+
 export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
   const [formData, setFormData] = useState<SaleFormData>({
-    nozzleId: "",
+    nozzleId: "NOZZLE_1",
     fuelType: "Diesel",
     openingReading: 0,
     closingReading: 0,
     rate: 0,
     paymentMode: "cash",
-    customerId: "",
+    customerId: "CUST_001",
   })
 
   const [loading, setLoading] = useState(false)
@@ -89,17 +91,27 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
     <Modal isOpen={isOpen} onClose={onClose} title="Add New Sale" className="max-w-lg">
       <form onSubmit={handleSubmit} className="space-y-4">
 
+        {/* Nozzle + Fuel */}
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Nozzle ID</Label>
-            <Input
-              placeholder="e.g. NOZZLE_02"
+            <Select
               value={formData.nozzleId}
-              onChange={(e) =>
-                setFormData({ ...formData, nozzleId: e.target.value })
+              onValueChange={(v) =>
+                setFormData({ ...formData, nozzleId: v })
               }
-              required
-            />
+            >
+              <SelectTrigger >
+                <SelectValue placeholder="Select Nozzle" />
+              </SelectTrigger>
+              <SelectContent>
+                {NOZZLE_OPTIONS.map((nozzle) => (
+                  <SelectItem key={nozzle} value={nozzle}>
+                    {nozzle}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -122,6 +134,7 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
           </div>
         </div>
 
+        {/* Readings */}
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Opening Reading</Label>
@@ -156,6 +169,7 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
           </div>
         </div>
 
+        {/* Rate + Payment */}
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Rate (₹/L)</Label>
@@ -190,6 +204,7 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
           </div>
         </div>
 
+        {/* Customer */}
         <div className="space-y-2">
           <Label>Customer ID</Label>
           <Input
@@ -202,6 +217,7 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
           />
         </div>
 
+        {/* Summary */}
         <div className="rounded-lg bg-muted p-4 space-y-2">
           <div className="flex justify-between text-sm">
             <span>Quantity</span>
@@ -213,8 +229,14 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
           </div>
         </div>
 
+        {/* Actions */}
         <div className="flex gap-3">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1 bg-transparent">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="flex-1 bg-transparent"
+          >
             Cancel
           </Button>
           <Button type="submit" className="flex-1" disabled={loading}>
