@@ -75,7 +75,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       isOpen={isOpen}
       onClose={onClose}
       title="Welcome Back"
-      className="max-w-md"
+      className="max-w-md m-4"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="flex items-center justify-center mb-2">

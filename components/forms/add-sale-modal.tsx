@@ -93,7 +93,7 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
       isOpen={isOpen}
       onClose={onClose}
       title="Add New Sale"
-      className="max-w-lg"
+      className="max-w-lg m-4"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Nozzle + Fuel */}

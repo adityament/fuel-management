@@ -79,7 +79,7 @@ export function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps)
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add New Staff" className="max-w-md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Add New Staff" className="max-w-md m-4">
       <form onSubmit={handleSubmit} className="space-y-4">
 
         {/* Username */}

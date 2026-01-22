@@ -58,8 +58,8 @@ export function DashboardHeader({ title }: DashboardHeaderProps) {
               <p className="text-xs text-muted-foreground capitalize">{user?.role?.replace("-", " ")}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive font-bold">
+              <LogOut className="mr-2 h-4 w-4 text-destructive" />
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

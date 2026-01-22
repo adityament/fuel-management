@@ -128,7 +128,7 @@ export default function AdminProfilePage() {
       <div className="grid grid-cols-1 space-y-6">
 
         {/* ================= TOP GRID ================= */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 min-[1240px]:grid-cols-2 gap-6">
 
           {/* Profile Header */}
           <div className="rounded-xl border border-border bg-card p-6">
@@ -208,7 +208,7 @@ export default function AdminProfilePage() {
         </div>
 
         {/* ================= BOTTOM GRID ================= */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           {/* Profile Info */}
           <div className="rounded-xl border border-border bg-card p-6">
