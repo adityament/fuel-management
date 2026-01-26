@@ -221,7 +221,7 @@ export default function AdminAttendancePage() {
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border bg-card p-4">
             <p className="text-sm text-muted-foreground">Total Records</p>
             <p className="text-2xl font-bold">{filteredRecords.length}</p>

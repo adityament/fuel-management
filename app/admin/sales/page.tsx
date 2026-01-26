@@ -1,56 +1,61 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { DashboardLayout } from "@/components/dashboard/layout"
-import { DataTable } from "@/components/ui/data-table"
-import { Button } from "@/components/ui/button"
-import { FormSelect } from "@/components/ui/form-select"
-import { StatusBadge } from "@/components/ui/status-badge"
-import { SummaryCard } from "@/components/ui/summary-card"
-import { DownloadButtons } from "@/components/download-buttons"
-import { AddSaleModal, type SaleFormData } from "@/components/forms/add-sale-modal"
+import { useEffect, useState } from "react";
+import { DashboardLayout } from "@/components/dashboard/layout";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import { FormSelect } from "@/components/ui/form-select";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { SummaryCard } from "@/components/ui/summary-card";
+import { DownloadButtons } from "@/components/download-buttons";
+import {
+  AddSaleModal,
+  type SaleFormData,
+} from "@/components/forms/add-sale-modal";
 
-import type { Sale } from "@/lib/types"
-import { Plus, Filter, IndianRupee, Droplets, Receipt } from "lucide-react"
-import { DeleteConfirmModal } from "@/components/forms/delete-modal"
+import type { Sale } from "@/lib/types";
+import { Plus, Filter, IndianRupee, Droplets, Receipt } from "lucide-react";
+// import { DeleteConfirmModal } from "@/components/forms/delete-modal";   // comment kar diya
 
-const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
+const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
 export default function AdminSalesPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [salesList, setSalesList] = useState<Sale[]>([])
-  const [showFilters, setShowFilters] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [salesList, setSalesList] = useState<Sale[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
 
-  // ✅ DELETE STATES
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [saleIdToDelete, setSaleIdToDelete] = useState<string | null>(null)
-  const [deleteLoading, setDeleteLoading] = useState(false)
+  // DELETE STATES — abhi use nahi kar rahe
+  // const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  // const [saleIdToDelete, setSaleIdToDelete] = useState<string | null>(null);
+  // const [deleteLoading, setDeleteLoading] = useState(false);
 
   const [filters, setFilters] = useState({
     nozzleId: "all",
     fuelType: "all",
-  })
+  });
 
   // ================= FETCH SALES =================
   useEffect(() => {
     const fetchSales = async () => {
       try {
-        const token = localStorage.getItem("token")
+        const token = localStorage.getItem("token");
 
         const res = await fetch(`${BASE_URL}/api/sales/getall`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        })
+        });
 
-        if (!res.ok) throw new Error("Failed to fetch sales")
+        if (!res.ok) throw new Error("Failed to fetch sales");
 
-        const data = await res.json()
+        const data = await res.json();
 
         const formatted: Sale[] = data.map((item: any) => ({
           id: item._id,
           nozzleId: item.nozzleId,
-          fuelType: item.fuelType,
+          fuelType:
+            item.fuelType.charAt(0).toUpperCase() +
+            item.fuelType.slice(1).toLowerCase(),
           openingReading: item.openingReading,
           closingReading: item.closingReading,
           rate: item.rate,
@@ -58,23 +63,23 @@ export default function AdminSalesPage() {
           amount: item.amount,
           paymentMode: item.paymentMode,
           shift: item.shift,
-          date: item.date,
+          date: item.createdAt,               // ← yahan createdAt use kar rahe hain
           customerId: item.customerId,
           staffId: item.createdBy,
-        }))
+        }));
 
-        setSalesList(formatted)
+        setSalesList(formatted);
       } catch (err) {
-        console.error("Sales fetch failed:", err)
+        console.error("Sales fetch failed:", err);
       }
-    }
+    };
 
-    fetchSales()
-  }, [])
+    fetchSales();
+  }, []);
 
   // ================= ADD SALE =================
   const handleAddSale = (data: SaleFormData) => {
-    const qty = data.closingReading - data.openingReading
+    const qty = data.closingReading - data.openingReading;
 
     const newSale: Sale = {
       id: crypto.randomUUID(),
@@ -90,52 +95,22 @@ export default function AdminSalesPage() {
       date: new Date().toISOString(),
       customerId: data.customerId,
       staffId: "STAFF",
-    }
+    };
 
-    setSalesList((prev) => [...prev, newSale])
-  }
+    setSalesList((prev) => [...prev, newSale]);
+  };
 
-  // ================= DELETE SALE =================
-  const handleConfirmDelete = async () => {
-    if (!saleIdToDelete) return
-
-    try {
-      setDeleteLoading(true)
-      const token = localStorage.getItem("token")
-
-      const res = await fetch(
-        `${BASE_URL}/api/sales/deletesale/${saleIdToDelete}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-
-      if (!res.ok) throw new Error("Delete failed")
-
-      setSalesList((prev) =>
-        prev.filter((sale) => sale.id !== saleIdToDelete)
-      )
-
-      setDeleteModalOpen(false)
-      setSaleIdToDelete(null)
-    } catch (err) {
-      console.error("Delete error:", err)
-    } finally {
-      setDeleteLoading(false)
-    }
-  }
+  // ================= DELETE SALE — abhi comment mein =================
+  // const handleConfirmDelete = async () => { ... };
 
   // ================= FILTERS =================
   const filteredSales = salesList.filter((sale) => {
     if (filters.nozzleId !== "all" && sale.nozzleId !== filters.nozzleId)
-      return false
+      return false;
     if (filters.fuelType !== "all" && sale.fuelType !== filters.fuelType)
-      return false
-    return true
-  })
+      return false;
+    return true;
+  });
 
   const nozzleOptions = [
     { value: "all", label: "All Nozzles" },
@@ -143,16 +118,28 @@ export default function AdminSalesPage() {
       value: id,
       label: id,
     })),
-  ]
+  ];
 
   const fuelTypeOptions = [
     { value: "all", label: "All Types" },
     { value: "Petrol", label: "Petrol" },
     { value: "Diesel", label: "Diesel" },
-  ]
+  ];
 
   // ================= TABLE COLUMNS =================
   const columns = [
+    {
+      key: "date",
+      header: "Date",
+      render: (row: Sale) => {
+        const d = new Date(row.date);
+        return d.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      },
+    },
     { key: "nozzleId", header: "Nozzle ID" },
     {
       key: "fuelType",
@@ -171,29 +158,31 @@ export default function AdminSalesPage() {
       header: "Total Amount",
       render: (i: Sale) => `₹${i.amount.toLocaleString("en-IN")}`,
     },
-    {
-      key: "actions",
-      header: "Action",
-      render: (row: Sale) => (
-        <div className="flex gap-2">
-          <Button size="sm" className="bg-green-500 text-white" variant="outline">
-            Edit
-          </Button>
-          <Button
-            size="sm"
-            className="bg-red-500 text-white"
-            variant="outline"
-            onClick={() => {
-              setSaleIdToDelete(row.id)
-              setDeleteModalOpen(true)
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      ),
-    },
-  ]
+
+    // Action column pura comment out kar diya
+    // {
+    //   key: "actions",
+    //   header: "Action",
+    //   render: (row: Sale) => (
+    //     <div className="flex gap-2">
+    //       <Button size="sm" className="bg-green-500 text-white" variant="outline">
+    //         Edit
+    //       </Button>
+    //       <Button
+    //         size="sm"
+    //         className="bg-red-500 text-white"
+    //         variant="outline"
+    //         onClick={() => {
+    //           setSaleIdToDelete(row.id);
+    //           setDeleteModalOpen(true);
+    //         }}
+    //       >
+    //         Delete
+    //       </Button>
+    //     </div>
+    //   ),
+    // },
+  ];
 
   // ================= UI =================
   return (
@@ -229,25 +218,19 @@ export default function AdminSalesPage() {
                 label="Nozzle ID"
                 options={nozzleOptions}
                 value={filters.nozzleId}
-                onValueChange={(v) =>
-                  setFilters({ ...filters, nozzleId: v })
-                }
+                onValueChange={(v) => setFilters({ ...filters, nozzleId: v })}
               />
               <FormSelect
                 label="Fuel Type"
                 options={fuelTypeOptions}
                 value={filters.fuelType}
-                onValueChange={(v) =>
-                  setFilters({ ...filters, fuelType: v })
-                }
+                onValueChange={(v) => setFilters({ ...filters, fuelType: v })}
               />
               <div className="flex items-end">
                 <Button
                   variant="outline"
                   className="w-full bg-transparent"
-                  onClick={() =>
-                    setFilters({ nozzleId: "all", fuelType: "all" })
-                  }
+                  onClick={() => setFilters({ nozzleId: "all", fuelType: "all" })}
                 >
                   Clear Filters
                 </Button>
@@ -257,19 +240,15 @@ export default function AdminSalesPage() {
         )}
 
         {/* SUMMARY */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
           <SummaryCard
             title="Total Sales"
-            value={`₹${filteredSales
-              .reduce((s, i) => s + i.amount, 0)
-              .toLocaleString("en-IN")}`}
+            value={`₹${filteredSales.reduce((s, i) => s + i.amount, 0).toLocaleString("en-IN")}`}
             icon={IndianRupee}
           />
           <SummaryCard
             title="Total Quantity"
-            value={`${filteredSales
-              .reduce((s, i) => s + i.quantity, 0)
-              .toFixed(2)} L`}
+            value={`${filteredSales.reduce((s, i) => s + i.quantity, 0).toFixed(2)} L`}
             icon={Droplets}
           />
           <SummaryCard
@@ -298,15 +277,15 @@ export default function AdminSalesPage() {
         onSubmit={handleAddSale}
       />
 
-      <DeleteConfirmModal
+      {/* Delete modal abhi comment mein */}
+      {/* <DeleteConfirmModal
         isOpen={deleteModalOpen}
         onClose={() => {
-          setDeleteModalOpen(false)
-          setSaleIdToDelete(null)
+          setDeleteModalOpen(false);
+          setSaleIdToDelete(null);
         }}
         onConfirm={handleConfirmDelete}
-      
-      />
+      /> */}
     </DashboardLayout>
-  )
+  );
 }

@@ -69,7 +69,10 @@ export function AddSaleModal({ isOpen, onClose, onSubmit }: AddSaleModalProps) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          fuelType: formData.fuelType.toLowerCase(),
+        }),
       });
 
       const data = await res.json();

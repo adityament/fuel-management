@@ -1,5 +1,7 @@
 // Types and interfaces for the Petrol Pump Management System
 
+import { Key } from "react"
+
 export type UserRole = "super-admin" | "admin" | "staff"
 
 export interface User {
@@ -64,14 +66,19 @@ export interface Attendance {
 }
 
 export interface Stock {
+  _id: Key | null | undefined
   id: string
-  fuelType: "Petrol" | "Diesel" | "Premium"
+  fuelType: "petrol" | "diesel" | "premium" 
+  fuelTypeDisplay?: string                   
   tankId: string
   calculatedStock: number
   dipReading: number
   receivedQuantity: number
   totalStock: number
   closingStock: number
+  tankName?: string
+  createdAt?: string
+  updatedAt?: string
 }
 export interface CompanyInfo {
   name: string;

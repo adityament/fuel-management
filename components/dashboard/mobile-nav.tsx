@@ -24,6 +24,7 @@ const navItems: Record<UserRole, NavItem[]> = {
     { href: "/admin/staff", label: "Staff", icon: Users },
     { href: "/admin/attendance", label: "Attend", icon: Clock },
     { href: "/admin/stock", label: "Stock", icon: Package },
+    { href: "/admin/profile", label: "Profile", icon: UserCircle }, // ← Added this
   ],
   staff: [
     { href: "/staff", label: "Home", icon: LayoutDashboard },
@@ -38,7 +39,7 @@ export function MobileNav() {
   const { user } = useAuth()
 
   const role = user?.role ?? "staff"
-  const items = navItems[role].slice(0, 5) // Max 5 items for mobile
+  const items = navItems[role].slice(0, 6) // Changed to 6 so Profile shows for admin
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background md:hidden">
