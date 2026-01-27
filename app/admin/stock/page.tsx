@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { DataTable } from "@/components/ui/data-table";
 import type { Stock } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Plus, History, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, History, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
 import {
   AddStockModal,
@@ -213,7 +213,7 @@ export default function AdminStockPage() {
             <p className="text-sm mt-1">{error}</p>
           </div>
         ) : loading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading tank data...</div>
+          <div className="flex items-center justify-center">   <Loader2 className="h-4 w-4 animate-spin" /></div>
         ) : stocks.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             No tanks or stock entries found
