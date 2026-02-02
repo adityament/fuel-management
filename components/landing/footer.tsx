@@ -11,7 +11,7 @@ export function LandingFooter() {
               <div className="rounded-lg bg-primary p-1.5">
                 <Fuel className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-lg font-bold text-foreground">FuelFlow</span>
+              <span className="text-lg font-bold text-foreground">FuelSetu</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Modern petrol pump management system for efficient operations.
@@ -71,7 +71,7 @@ export function LandingFooter() {
         </div>
 
         <div className="mt-12 border-t border-border pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} FuelFlow. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} FuelSetu. All rights reserved.</p>
         </div>
       </div>
     </footer>

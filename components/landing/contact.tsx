@@ -76,7 +76,7 @@ const ContactSection = () => {
             Get In Touch
           </h2>
           <p className="text-lg text-muted-foreground">
-            Have questions about FuelFlow? We're here to help!
+            Have questions about FuelSetu? We're here to help!
           </p>
         </div>
 

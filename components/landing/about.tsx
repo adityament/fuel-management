@@ -13,15 +13,15 @@ const AboutSection = () => {
           </div>
          <div className="md:w-[50%] w-full">
             <h2 className="text-3xl font-bold text-foreground md:text-4xl mb-6">
-              About FuelFlow
+              About FuelSetu
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              FuelFlow is designed specifically for petrol pump owners and
+              FuelSetu is designed specifically for petrol pump owners and
               managers. Our platform brings together robust features and an
               intuitive interface, allowing you to effortlessly manage sales,
               track inventory, monitor staff attendance, and generate insightful
               reports—all from a single dashboard. Whether you run a single
-              station or oversee multiple locations, FuelFlow grows with your
+              station or oversee multiple locations, FuelSetu grows with your
               business, helping you operate smarter and more efficiently.
             </p>
           </div>

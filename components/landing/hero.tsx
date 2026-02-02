@@ -25,7 +25,7 @@ export function LandingHero() {
             </h1>
 
             <p className="mb-8 text-lg text-muted-foreground md:text-xl text-pretty">
-              FuelFlow is a comprehensive management system designed to help petrol pump owners track sales, manage
+              FuelSetu is a comprehensive management system designed to help petrol pump owners track sales, manage
               staff, monitor inventory, and optimize daily operations with ease.
             </p>
 

@@ -18,7 +18,7 @@ export function LandingHeader() {
             <div className="rounded-lg bg-primary p-1.5">
               <Fuel className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">FuelFlow</span>
+            <span className="text-xl font-bold text-foreground">FuelSetu</span>
           </Link>
 
           {/* Desktop Navigation */}

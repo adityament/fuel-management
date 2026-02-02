@@ -76,7 +76,7 @@ export function DashboardSidebar() {
             <div className="rounded-lg bg-sidebar-primary p-1.5">
               <Fuel className="h-5 w-5 text-sidebar-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-sidebar-foreground">FuelFlow</span>
+            <span className="text-lg font-bold text-sidebar-foreground">FuelSetu</span>
           </Link>
         )}
         {isCollapsed && (

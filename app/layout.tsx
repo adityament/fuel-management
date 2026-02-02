@@ -11,10 +11,10 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "FuelFlow - Petrol Pump Management System",
+  title: "FuelSetu - Petrol Pump Management System",
   description:
     "Modern petrol pump management system for sales, staff, and inventory tracking",
-  generator: "v0.app",
+ 
 };
 
 export default function RootLayout({
