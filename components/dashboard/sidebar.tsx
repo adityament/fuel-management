@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
+  BadgeInfo,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
@@ -38,6 +39,7 @@ const navItems: Record<UserRole, NavItem[]> = {
     { href: "/admin/staff", label: "Staff", icon: Users },
     { href: "/admin/attendance", label: "Attendance", icon: Clock },
     { href: "/admin/stock", label: "Stock", icon: Package },
+    { href: "/admin/expense", label: "Expense", icon: BadgeInfo },
     { href: "/admin/profile", label: "My Profile", icon: UserCircle },
   ],
   staff: [
