@@ -15,7 +15,6 @@ import {
 
 import type { Sale } from "@/lib/types";
 import { Plus, Filter, IndianRupee, Droplets, Receipt } from "lucide-react";
-// import { DeleteConfirmModal } from "@/components/forms/delete-modal";   // comment kar diya
 
 const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
 
@@ -24,14 +23,11 @@ export default function AdminSalesPage() {
   const [salesList, setSalesList] = useState<Sale[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
-  // DELETE STATES — abhi use nahi kar rahe
-  // const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  // const [saleIdToDelete, setSaleIdToDelete] = useState<string | null>(null);
-  // const [deleteLoading, setDeleteLoading] = useState(false);
-
   const [filters, setFilters] = useState({
     nozzleId: "all",
     fuelType: "all",
+    startDate: "", // ← new
+    endDate: "", // ← new
   });
 
   // ================= FETCH SALES =================
@@ -63,7 +59,7 @@ export default function AdminSalesPage() {
           amount: item.amount,
           paymentMode: item.paymentMode,
           shift: item.shift,
-          date: item.createdAt,               // ← yahan createdAt use kar rahe hain
+          date: item.createdAt,
           customerId: item.customerId,
           staffId: item.createdBy,
         }));
@@ -100,15 +96,34 @@ export default function AdminSalesPage() {
     setSalesList((prev) => [...prev, newSale]);
   };
 
-  // ================= DELETE SALE — abhi comment mein =================
-  // const handleConfirmDelete = async () => { ... };
-
   // ================= FILTERS =================
   const filteredSales = salesList.filter((sale) => {
+    // Nozzle filter
     if (filters.nozzleId !== "all" && sale.nozzleId !== filters.nozzleId)
       return false;
+
+    // Fuel type filter
     if (filters.fuelType !== "all" && sale.fuelType !== filters.fuelType)
       return false;
+
+    // Date filter — new
+    if (filters.startDate || filters.endDate) {
+      const saleDate = new Date(sale.date);
+      saleDate.setHours(0, 0, 0, 0); // only date part compare karne ke liye
+
+      if (filters.startDate) {
+        const start = new Date(filters.startDate);
+        start.setHours(0, 0, 0, 0);
+        if (saleDate < start) return false;
+      }
+
+      if (filters.endDate) {
+        const end = new Date(filters.endDate);
+        end.setHours(23, 59, 59, 999); // pura din include ho
+        if (saleDate > end) return false;
+      }
+    }
+
     return true;
   });
 
@@ -127,6 +142,7 @@ export default function AdminSalesPage() {
   ];
 
   // ================= TABLE COLUMNS =================
+  // (bilkul same rakha hai – no change)
   const columns = [
     {
       key: "date",
@@ -158,37 +174,13 @@ export default function AdminSalesPage() {
       header: "Total Amount",
       render: (i: Sale) => `₹${i.amount.toLocaleString("en-IN")}`,
     },
-
-    // Action column pura comment out kar diya
-    // {
-    //   key: "actions",
-    //   header: "Action",
-    //   render: (row: Sale) => (
-    //     <div className="flex gap-2">
-    //       <Button size="sm" className="bg-green-500 text-white" variant="outline">
-    //         Edit
-    //       </Button>
-    //       <Button
-    //         size="sm"
-    //         className="bg-red-500 text-white"
-    //         variant="outline"
-    //         onClick={() => {
-    //           setSaleIdToDelete(row.id);
-    //           setDeleteModalOpen(true);
-    //         }}
-    //       >
-    //         Delete
-    //       </Button>
-    //     </div>
-    //   ),
-    // },
   ];
 
   // ================= UI =================
   return (
     <DashboardLayout title="Sales" requiredRole="admin">
       <div className="space-y-6">
-        {/* ACTION BAR */}
+        {/* ACTION BAR – same */}
         <div className="flex justify-end">
           <div className="flex flex-wrap gap-2">
             <DownloadButtons sales={filteredSales} variant="dropdown" />
@@ -210,10 +202,11 @@ export default function AdminSalesPage() {
           </div>
         </div>
 
+        {/* FILTERS – yahan date inputs add kiye */}
         {/* FILTERS */}
         {showFilters && (
           <div className="rounded-xl border border-border bg-card p-4">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               <FormSelect
                 label="Nozzle ID"
                 options={nozzleOptions}
@@ -226,20 +219,57 @@ export default function AdminSalesPage() {
                 value={filters.fuelType}
                 onValueChange={(v) => setFilters({ ...filters, fuelType: v })}
               />
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  className="w-full bg-transparent"
-                  onClick={() => setFilters({ nozzleId: "all", fuelType: "all" })}
-                >
-                  Clear Filters
-                </Button>
+
+              {/* Start Date */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) =>
+                    setFilters({ ...filters, startDate: e.target.value })
+                  }
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
               </div>
+
+              {/* End Date */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) =>
+                    setFilters({ ...filters, endDate: e.target.value })
+                  }
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <Button
+                variant="outline"
+                className="bg-transparent"
+                onClick={() =>
+                  setFilters({
+                    nozzleId: "all",
+                    fuelType: "all",
+                    startDate: "",
+                    endDate: "",
+                  })
+                }
+              >
+                Clear All Filters
+              </Button>
             </div>
           </div>
         )}
-
-        {/* SUMMARY */}
+        {/* SUMMARY – same */}
         <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
           <SummaryCard
             title="Total Sales"
@@ -258,7 +288,7 @@ export default function AdminSalesPage() {
           />
         </div>
 
-        {/* TABLE */}
+        {/* TABLE – bilkul same */}
         <div className="rounded-xl border border-border bg-card p-4 md:p-6">
           <DataTable
             data={filteredSales}
@@ -270,22 +300,11 @@ export default function AdminSalesPage() {
         </div>
       </div>
 
-      {/* MODALS */}
       <AddSaleModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleAddSale}
       />
-
-      {/* Delete modal abhi comment mein */}
-      {/* <DeleteConfirmModal
-        isOpen={deleteModalOpen}
-        onClose={() => {
-          setDeleteModalOpen(false);
-          setSaleIdToDelete(null);
-        }}
-        onConfirm={handleConfirmDelete}
-      /> */}
     </DashboardLayout>
   );
 }
